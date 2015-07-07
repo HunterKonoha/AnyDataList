@@ -13,13 +13,11 @@ AnyDataList::AnyDataList(std::string e) {
 	if (datastart == std::string::npos) {
 		//exception(文法エラー)
 		//{が見つからなかったことを示す。
-		s3d::MessageBox::Show(L"文法エラーです。\n{が見つかりませんでした。");
 		return;
 	}
 	if (datastart > this->find(e, '}')) {
 		//exception(文法エラー)
 		//{の前に}が見つかったことを示す
-		s3d::MessageBox::Show(L"文法エラーです。\n{の前に}が見つかりました。");
 		return;
 	}
 	//{}の数の一致とn次括弧とネストと}の後の文字列を確認する。
@@ -36,12 +34,12 @@ AnyDataList::AnyDataList(std::string e) {
 		if (braces[0].size() != braces[1].size()) {
 			//exception(文法エラー)
 			//{と}の数が一致していないことを示す
-			s3d::MessageBox::Show(L"文法エラーです。{と}の数が一致しませんでした。");
 			return;
 		}
 		//データのn次括弧を検出する
 		{
 			//connect[0]は始まりの括弧({)からどれだけ括弧が続いているか、connect[1]はconnect[0]の終わり括弧(})版
+			//終わり括弧では判定が難しいので行わずはじめの括弧だけで判定する。
 			std::array<int, 2> connect{ { 0, 0 } };
 			for (int i = datastart; i < e.size(); ++i) {
 				if (e[i] == '{') ++connect[0];
@@ -60,25 +58,9 @@ AnyDataList::AnyDataList(std::string e) {
 					break;
 				}
 			}
-			if (connect[0]>1 || connect[1] > 1) {
-				if (connect[0] == connect[1]) {
-					//exception(文法エラー)
-					//n次括弧になっていることを示す。
-					s3d::MessageBox::Show(s3d::Widen("文法エラーです。\n" + boost::lexical_cast<std::string>(connect[0]) + "次括弧になっています。"));
-					return;
-				}
-				else if (connect[0]<connect[1]) {
-					//exception(文法エラー)
-					//最後の項の関数定義で;を忘れているか終わりの括弧}は多いことを示す。
-					s3d::MessageBox::Show(L"文法エラーです。\n終わりの括弧(})が多く検出されました。\n関数定義で;を忘れているか、多く書いています。");
-					return;
-				}
-				else {
-					//exception(文法エラー)
-					//はじめの{が多いことを示す
-					s3d::MessageBox::Show(L"文法エラーです。始まりの括弧({)が多く検出されました。");
-					return;
-				}
+			if (connect[0]>1) {
+				//exception(文法エラー)
+				//n次括弧になっていることを示す。
 			}
 		}
 		//{}のネストが正しいか検出する。
@@ -111,7 +93,6 @@ AnyDataList::AnyDataList(std::string e) {
 				if (serchbrance[0][0] && func(serchbrance[0], 0) != 0) {
 					//exception(文法エラー)
 					//{}のネストがおかしいことを示す
-					s3d::MessageBox::Show(L"文法エラーです。{}のペアが一致しませんでした。");
 					return;
 				}
 			}
@@ -124,7 +105,6 @@ AnyDataList::AnyDataList(std::string e) {
 				else {
 					//exception(文法エラー)
 					//}の後に文字があったことを示す
-					s3d::MessageBox::Show(L"文法エラーです。}の後に不正な文字を検出しました。");
 					return;
 				}
 			}
@@ -138,13 +118,11 @@ AnyDataList::AnyDataList(std::string e) {
 		if ((pos[0] != std::string::npos) ^ (pos[1] != std::string::npos)) {
 			//exception(文法エラー)
 			//[か]のどちらかを付け忘れの時にこの所に入る。
-			s3d::MessageBox::Show(L"文法エラーです。\n[か]の付け忘れです。");
 			return;
 		}
 		if (pos[0] > pos[1]) {
 			//exception(文法エラー)
 			//[が]よりも早く来た時にこの中に入る
-			s3d::MessageBox::Show(L"文法エラーです。\n[か]より早く来ています。");
 			return;
 		}
 		else if (pos[0] != std::string::npos&&pos[1] != std::string::npos) {
@@ -185,13 +163,11 @@ AnyDataList::AnyDataList(std::string e) {
 			if (equal == std::string::npos) {
 				//exception(文法エラー)
 				//変数名しか指定されていない(=がない)ことを示す。
-				s3d::MessageBox::Show(L"文法エラーです。\n'='がありません。");
 				return;
 			}
 			if (equal == value.size() - 1) {
 				//exception(文法エラー)
 				//変数の値がないことを示す。
-				s3d::MessageBox::Show(L"文法エラーです。\n変数の値がありません。");
 				return;
 			}
 			//=の右側にAnyDataListと関数の構造({})がない場合のみ=二つエラーを出す。
@@ -200,7 +176,6 @@ AnyDataList::AnyDataList(std::string e) {
 			if (value.find('{', equal + 1) == std::string::npos&&value.find('=', equal + 1) != std::string::npos) {
 				//exception(文法エラー)
 				//=が二つ以上あることを示す。
-				s3d::MessageBox::Show(L"文法エラーです。\n'='が二つ以上発見しました。");
 				return;
 			}
 			valuedata.push_back({ std::string(value.begin(), value.begin() + equal), std::string(value.begin() + equal + 1, value.end()) });
@@ -225,7 +200,6 @@ std::string::size_type AnyDataList::find(const std::string& String, const char& 
 			if (StartPos == std::string::npos) {
 				//exception(文法エラー)
 				//"のペアが見つからないことを示す
-				s3d::MessageBox::Show(L"文法エラーです。\n\"のペアを見つけることができませんでした");
 				return std::string::npos;
 			}
 		}
@@ -238,7 +212,6 @@ std::string::size_type AnyDataList::find(const std::string& String, const char& 
 					if (StartPos == std::string::npos) {
 						//exception(文法エラー)
 						//読み飛ばす文字のペアが見つからない事を示す
-						s3d::MessageBox::Show(s3d::Widen(std::string("文法エラーです。\nペアを見つけることができませんでした")));
 						return std::string::npos;
 					}
 					c = true;
